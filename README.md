@@ -36,7 +36,7 @@ Bu proje, hassas bilgileri (JWT_SECRET gibi) güvenli bir şekilde saklamak içi
 docker-compose up -d
 
 # Vault'u ilklendirin (secret'ları oluşturur)
-docker exec -it vault_server sh /app/init-vault.sh
+./init-vault.sh
 ```
 
 #### Vault'tan Secret Okuma
@@ -210,7 +210,7 @@ This project is integrated with **HashiCorp Vault** to securely store sensitive 
 docker-compose up -d
 
 # Initialize Vault (creates secrets)
-docker exec -it vault_server sh /app/init-vault.sh
+./init-vault.sh
 ```
 
 #### Reading Secrets from Vault

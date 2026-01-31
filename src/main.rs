@@ -72,7 +72,7 @@ async fn fetch_secrets_from_vault() -> Result<String, Box<dyn std::error::Error>
                                             };
 
                                                 if !auth_header.starts_with("Bearer ") {
-                                                        return HttpResponse::Unauthorized().body("Gecersiz Token formati! (Invalid format!)");
+                                                        return HttpResponse::Unauthorized().body("Geçersiz Token formatı! (Invalid format!)");
                                                             }
 
                                                                 let token_string = &auth_header[7..];

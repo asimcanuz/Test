@@ -6,6 +6,8 @@ release/
 *.swp
 .vscode/
 .idea/
-Upload edilen dosyaları repoya yükleme (Don't upload content files)
+# Upload edilen dosyaları repoya yükleme (Don't upload content files)
 uploads/*
-!uploads/.gitkeep*.backup
+!uploads/.gitkeep
+# Backup dosyaları (Backup files)
+*.backup

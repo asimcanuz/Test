@@ -17,7 +17,7 @@ pub async fn download_file(req: HttpRequest, data: web::Data<AppState>) -> impl 
     };
 
     if !auth_header.starts_with("Bearer ") {
-        return HttpResponse::Unauthorized().body("Gecersiz Token formati! (Invalid format!)");
+        return HttpResponse::Unauthorized().body("Geçersiz Token formatı! (Invalid format!)");
     }
 
     let token_string = &auth_header[7..];
@@ -28,7 +28,7 @@ pub async fn download_file(req: HttpRequest, data: web::Data<AppState>) -> impl 
     // Token'ı çöz ve süresini kontrol et (Decode token and check expiration)
     let file_sub_path = match decode::<Claims>(token_string, &key, &validation) {
         Ok(token_data) => token_data.claims.sub,
-        Err(_) => return HttpResponse::Unauthorized().body("Token gecersiz veya süresi dolmuş! (Invalid or expired token!)"),
+        Err(_) => return HttpResponse::Unauthorized().body("Token geçersiz veya süresi dolmuş! (Invalid or expired token!)"),
     };
 
     // B. Yol Güvenliği (Path Sanitization) 🧹

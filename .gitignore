@@ -8,4 +8,4 @@ release/
 .idea/
 Upload edilen dosyaları repoya yükleme (Don't upload content files)
 uploads/*
-!uploads/.gitkeep
+!uploads/.gitkeep*.backup

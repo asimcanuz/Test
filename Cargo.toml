@@ -21,3 +21,7 @@ jsonwebtoken = "9"
 
 # Çevre Değişkenleri (Env Vars)
 dotenvy = "0.15"
+
+# HashiCorp Vault İstemcisi (Vault Client)
+vaultrs = "0.7"
+vaultrs-login = "0.2"

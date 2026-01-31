@@ -1,11 +1,13 @@
 use actix_web::{web, App, HttpServer, HttpResponse, Responder, HttpRequest};
 use actix_files::NamedFile; // Zero-copy & Range Requests için (For Zero-copy & Range Requests)
-use actix_web::http::header::{CACHE_CONTROL, CacheControl, CacheDirective}; // Header modülleri
+use actix_web::http::header::CACHE_CONTROL; // Header modülleri
 use serde::{Deserialize, Serialize};
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use dotenvy::dotenv;
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
+use vaultrs::client::{VaultClient, VaultClientSettingsBuilder};
+use vaultrs::kv2;
 
 // ---------------------------------------------------------
 // 1. Veri Yapıları (Data Structures)
@@ -14,17 +16,53 @@ use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     sub: String, // İstenen dosya yolu (Requested file path)
-        exp: usize,  // Son kullanma tarihi (Expiration timestamp)
-        }
+    exp: usize,  // Son kullanma tarihi (Expiration timestamp)
+}
 
-        struct AppState {
-            jwt_secret: String,
-                base_storage_path: String,
-                }
+#[derive(Debug, Serialize, Deserialize)]
+struct VaultSecrets {
+    jwt_secret: String,
+}
 
-                // ---------------------------------------------------------
-                // 2. Handler (İstek Karşılayıcı / Request Handler)
-                // ---------------------------------------------------------
+struct AppState {
+    jwt_secret: String,
+    base_storage_path: String,
+}
+
+// ---------------------------------------------------------
+// 2. Vault İşlemleri (Vault Operations)
+// ---------------------------------------------------------
+
+/// Vault'tan secret'ları çeker (Fetch secrets from Vault)
+async fn fetch_secrets_from_vault() -> Result<String, Box<dyn std::error::Error>> {
+    let vault_addr = env::var("VAULT_ADDR")
+        .unwrap_or_else(|_| "http://localhost:8200".to_string());
+    let vault_token = env::var("VAULT_TOKEN")
+        .expect("VAULT_TOKEN ortam değişkeni gerekli! (VAULT_TOKEN env var required!)");
+
+    println!("🔗 Vault'a bağlanılıyor: {}", vault_addr);
+
+    // Vault istemcisi oluştur (Create Vault client)
+    let client = VaultClient::new(
+        VaultClientSettingsBuilder::default()
+            .address(&vault_addr)
+            .token(&vault_token)
+            .build()?
+    )?;
+
+    println!("📥 Vault'tan secret'lar alınıyor...");
+
+    // KV v2 engine'den secret'ı oku (Read secret from KV v2 engine)
+    let secrets: VaultSecrets = kv2::read(&client, "secret", "cdn-service").await?;
+
+    println!("✅ Secret'lar başarıyla alındı!");
+
+    Ok(secrets.jwt_secret)
+}
+
+// ---------------------------------------------------------
+// 3. Handler (İstek Karşılayıcı / Request Handler)
+// ---------------------------------------------------------
 
                 async fn download_file(req: HttpRequest, data: web::Data<AppState>) -> impl Responder {
                     // A. Token Kontrolü (Token Check) 🛡️
@@ -93,16 +131,24 @@ struct Claims {
                                                                                                                                                                                                                                                                                                                                     }
 
                                                                                                                                                                                                                                                                                                                                     // ---------------------------------------------------------
-                                                                                                                                                                                                                                                                                                                                    // 3. Main (Giriş / Entry)
+                                                                                                                                                                                                                                                                                                                                    // 4. Main (Giriş / Entry)
                                                                                                                                                                                                                                                                                                                                     // ---------------------------------------------------------
 
                                                                                                                                                                                                                                                                                                                                     #[actix_web::main]
                                                                                                                                                                                                                                                                                                                                     async fn main() -> std::io::Result<()> {
                                                                                                                                                                                                                                                                                                                                         dotenv().ok();
                                                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                                                                // Fail-Fast: Ayarlar yoksa başlatma (Don't start if config missing)
-                                                                                                                                                                                                                                                                                                                                                    let secret = env::var("JWT_SECRET").expect("JWT_SECRET .env dosyasında eksik!");
-                                                                                                                                                                                                                                                                                                                                                        let storage_path = env::var("STORAGE_PATH").unwrap_or_else(|_| "./uploads".to_string());
+                                                                                                                                                                                                                                                                                                                                                // Vault'tan secret'ları getir (Fetch secrets from Vault)
+                                                                                                                                                                                                                                                                                                                                                    let secret = match fetch_secrets_from_vault().await {
+                                                                                                                                                                                                                                                                                                                                                            Ok(s) => s,
+                                                                                                                                                                                                                                                                                                                                                                    Err(e) => {
+                                                                                                                                                                                                                                                                                                                                                                                eprintln!("❌ Vault'tan secret alınamadı: {}", e);
+                                                                                                                                                                                                                                                                                                                                                                                        eprintln!("💡 Fallback: .env dosyasından JWT_SECRET okunacak");
+                                                                                                                                                                                                                                                                                                                                                                                                env::var("JWT_SECRET")
+                                                                                                                                                                                                                                                                                                                                                                                                            .expect("JWT_SECRET ne Vault'ta ne de .env dosyasında bulunamadı!")
+                                                                                                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                                                                                                    };
+                                                                                                                                                                                                                                                                                                                                                                                                                        let storage_path = env::var("STORAGE_PATH").unwrap_or_else(|_| "./uploads".to_string());
 
                                                                                                                                                                                                                                                                                                                                                             let state = web::Data::new(AppState {
                                                                                                                                                                                                                                                                                                                                                                     jwt_secret: secret,

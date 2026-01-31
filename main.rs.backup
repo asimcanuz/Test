@@ -1,4 +1,4 @@
-use actix_web::{web, App, HttpServer, HttpResponse, Responder, HttpRequest};
+use actix_web::{web, App, HttpServer, HttpResponse, Responder, HttpRequest, middleware};
 use actix_files::NamedFile; // Zero-copy & Range Requests için (For Zero-copy & Range Requests)
 use actix_web::http::header::{CACHE_CONTROL, CacheControl, CacheDirective}; // Header modülleri
 use serde::{Deserialize, Serialize};
@@ -6,6 +6,9 @@ use std::env;
 use std::path::{Path, PathBuf};
 use dotenvy::dotenv;
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
+use actix_web_lab::middleware::Compress;
+use actix_governor::{Governor, GovernorConfigBuilder};
+use std::time::Duration;
 
 // ---------------------------------------------------------
 // 1. Veri Yapıları (Data Structures)
@@ -25,6 +28,14 @@ struct Claims {
                 // ---------------------------------------------------------
                 // 2. Handler (İstek Karşılayıcı / Request Handler)
                 // ---------------------------------------------------------
+
+                // Health Check Endpoint (Sağlık Kontrolü) 🏥
+                async fn health_check() -> impl Responder {
+                    HttpResponse::Ok().json(serde_json::json!({
+                        "status": "healthy",
+                        "service": "cdn-service"
+                    }))
+                }
 
                 async fn download_file(req: HttpRequest, data: web::Data<AppState>) -> impl Responder {
                     // A. Token Kontrolü (Token Check) 🛡️

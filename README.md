@@ -23,12 +23,57 @@ Bu proje, **JWT (JSON Web Token)** ile korunan güvenli bir CDN (Content Deliver
   - Dokümanlar → Cache yok
 - 🐳 **Docker Desteği**: Kolay dağıtım için Docker ve Docker Compose yapılandırması
 - ⚙️ **Asenkron İşleme**: Tokio ile yüksek performanslı async/await desteği
+- 🔒 **HashiCorp Vault Entegrasyonu**: Secret'lar güvenli bir şekilde Vault'ta saklanır
+
+### 🔐 HashiCorp Vault Entegrasyonu
+
+Bu proje, hassas bilgileri (JWT_SECRET gibi) güvenli bir şekilde saklamak için **HashiCorp Vault** ile entegre edilmiştir.
+
+#### Vault Kurulumu
+
+```bash
+# Docker Compose ile Vault ve CDN servisini başlatın
+docker-compose up -d
+
+# Vault'u ilklendirin (secret'ları oluşturur)
+docker exec -it vault_server sh /app/init-vault.sh
+```
+
+#### Vault'tan Secret Okuma
+
+Uygulama başlatıldığında, JWT_SECRET otomatik olarak Vault'tan okunur:
+
+```bash
+export VAULT_ADDR=http://localhost:8200
+export VAULT_TOKEN=myroot
+cargo run --release
+```
+
+#### Vault'ta Secret'ları Görüntüleme
+
+```bash
+# Vault'a bağlanın
+export VAULT_ADDR=http://localhost:8200
+export VAULT_TOKEN=myroot
+
+# Secret'ları görüntüleyin
+docker exec -it vault_server vault kv get secret/cdn-service
+```
+
+#### Fallback Mekanizması
+
+Vault'a bağlanılamadığında, uygulama `.env` dosyasındaki `JWT_SECRET` değerini kullanır:
+
+```bash
+echo "JWT_SECRET=gizli_anahtar_buraya" > .env
+```
 
 ### 🔧 Teknolojiler
 
 - **Rust** - Sistem programlama dili
 - **Actix-web** - Yüksek performanslı web framework
 - **JWT** - Token tabanlı kimlik doğrulama
+- **HashiCorp Vault** - Secret yönetimi ve güvenli depolama
 - **Docker** - Konteynerizasyon
 - **Tokio** - Asenkron runtime
 
@@ -36,7 +81,8 @@ Bu proje, **JWT (JSON Web Token)** ile korunan güvenli bir CDN (Content Deliver
 
 - Rust 1.84 veya üzeri
 - Docker & Docker Compose (opsiyonel)
-- `.env` dosyasında `JWT_SECRET` değişkeni
+- HashiCorp Vault (Docker Compose ile otomatik kurulur)
+- `.env` dosyasında `JWT_SECRET` değişkeni (Vault kullanılmıyorsa)
 
 ### 🚀 Kurulum ve Çalıştırma
 
@@ -50,8 +96,12 @@ cd Test
 # Uploads klasörünü oluşturun
 mkdir -p uploads
 
-# Docker Compose ile başlatın
+# Docker Compose ile başlatın (Vault ve CDN servisi)
 docker-compose up -d
+
+# Vault'u ilklendirin ve secret'ları oluşturun
+chmod +x init-vault.sh
+./init-vault.sh
 ```
 
 #### Manuel Kurulum
@@ -60,7 +110,12 @@ docker-compose up -d
 # Bağımlılıkları yükleyin
 cargo build --release
 
-# .env dosyası oluşturun
+# Seçenek 1: Vault kullanarak (Önerilen)
+export VAULT_ADDR=http://localhost:8200
+export VAULT_TOKEN=myroot
+export STORAGE_PATH=./uploads
+
+# Seçenek 2: .env dosyası ile (Fallback)
 echo "JWT_SECRET=gizli_anahtar_buraya" > .env
 echo "STORAGE_PATH=./uploads" >> .env
 
@@ -106,10 +161,12 @@ curl -H "Authorization: Bearer eyJhbGc..." \
 
 ```
 .
-├── main.rs              # Ana uygulama kodu
-├── cargo.toml           # Rust bağımlılıkları
+├── src/
+│   └── main.rs          # Ana uygulama kodu
+├── Cargo.toml           # Rust bağımlılıkları
 ├── Dockerfile           # Docker yapılandırması
-├── docker-compose.yml   # Docker Compose ayarları
+├── docker-compose.yml   # Docker Compose ayarları (Vault + CDN)
+├── init-vault.sh        # Vault ilklendirme script'i
 ├── setup.sh             # Kurulum script'i
 └── uploads/             # Dosya depolama klasörü
 ```
@@ -140,12 +197,57 @@ This project is a **JWT (JSON Web Token)** protected secure CDN (Content Deliver
   - Documents → No cache
 - 🐳 **Docker Support**: Docker and Docker Compose configuration for easy deployment
 - ⚙️ **Asynchronous Processing**: High-performance async/await support with Tokio
+- 🔒 **HashiCorp Vault Integration**: Secrets are securely stored in Vault
+
+### 🔐 HashiCorp Vault Integration
+
+This project is integrated with **HashiCorp Vault** to securely store sensitive information (such as JWT_SECRET).
+
+#### Vault Setup
+
+```bash
+# Start Vault and CDN service with Docker Compose
+docker-compose up -d
+
+# Initialize Vault (creates secrets)
+docker exec -it vault_server sh /app/init-vault.sh
+```
+
+#### Reading Secrets from Vault
+
+When the application starts, JWT_SECRET is automatically read from Vault:
+
+```bash
+export VAULT_ADDR=http://localhost:8200
+export VAULT_TOKEN=myroot
+cargo run --release
+```
+
+#### Viewing Secrets in Vault
+
+```bash
+# Connect to Vault
+export VAULT_ADDR=http://localhost:8200
+export VAULT_TOKEN=myroot
+
+# View secrets
+docker exec -it vault_server vault kv get secret/cdn-service
+```
+
+#### Fallback Mechanism
+
+When Vault is not accessible, the application uses the `JWT_SECRET` value from the `.env` file:
+
+```bash
+echo "JWT_SECRET=your_secret_key_here" > .env
+```
 
 ### 🔧 Technologies
 
 - **Rust** - Systems programming language
 - **Actix-web** - High-performance web framework
 - **JWT** - Token-based authentication
+- **HashiCorp Vault** - Secret management and secure storage
 - **Docker** - Containerization
 - **Tokio** - Asynchronous runtime
 
@@ -153,7 +255,8 @@ This project is a **JWT (JSON Web Token)** protected secure CDN (Content Deliver
 
 - Rust 1.84 or higher
 - Docker & Docker Compose (optional)
-- `JWT_SECRET` variable in `.env` file
+- HashiCorp Vault (automatically installed with Docker Compose)
+- `JWT_SECRET` variable in `.env` file (if not using Vault)
 
 ### 🚀 Installation and Running
 
@@ -167,8 +270,12 @@ cd Test
 # Create uploads folder
 mkdir -p uploads
 
-# Start with Docker Compose
+# Start with Docker Compose (Vault and CDN service)
 docker-compose up -d
+
+# Initialize Vault and create secrets
+chmod +x init-vault.sh
+./init-vault.sh
 ```
 
 #### Manual Installation
@@ -177,7 +284,12 @@ docker-compose up -d
 # Install dependencies
 cargo build --release
 
-# Create .env file
+# Option 1: Using Vault (Recommended)
+export VAULT_ADDR=http://localhost:8200
+export VAULT_TOKEN=myroot
+export STORAGE_PATH=./uploads
+
+# Option 2: Using .env file (Fallback)
 echo "JWT_SECRET=your_secret_key_here" > .env
 echo "STORAGE_PATH=./uploads" >> .env
 
@@ -223,10 +335,12 @@ curl -H "Authorization: Bearer eyJhbGc..." \
 
 ```
 .
-├── main.rs              # Main application code
-├── cargo.toml           # Rust dependencies
+├── src/
+│   └── main.rs          # Main application code
+├── Cargo.toml           # Rust dependencies
 ├── Dockerfile           # Docker configuration
-├── docker-compose.yml   # Docker Compose settings
+├── docker-compose.yml   # Docker Compose settings (Vault + CDN)
+├── init-vault.sh        # Vault initialization script
 ├── setup.sh             # Setup script
 └── uploads/             # File storage folder
 ```

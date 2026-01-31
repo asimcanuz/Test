@@ -83,7 +83,7 @@ async fn fetch_secrets_from_vault() -> Result<String, Box<dyn std::error::Error>
                                                                                 // Token'ı çöz ve süresini kontrol et (Decode token and check expiration)
                                                                                     let file_sub_path = match decode::<Claims>(token_string, &key, &validation) {
                                                                                             Ok(token_data) => token_data.claims.sub,
-                                                                                                    Err(_) => return HttpResponse::Unauthorized().body("Token gecersiz veya süresi dolmuş! (Invalid or expired token!)"),
+                                                                                                    Err(_) => return HttpResponse::Unauthorized().body("Token geçersiz veya süresi dolmuş! (Invalid or expired token!)"),
                                                                                                         };
 
                                                                                                             // B. Yol Güvenliği (Path Sanitization) 🧹

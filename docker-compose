@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  cdn-app:
+      build: .
+          container_name: rust_cdn_v1
+              restart: unless-stopped
+                  ports:
+                        - "8080:8080"
+                            environment:
+                                  - JWT_SECRET=bu_cok_gizli_bir_anahtardir_kimseyle_paylasmayin
+                                        - STORAGE_PATH=/app/uploads
+                                              - RUST_LOG=info
+                                                  volumes:
+                                                        # Bilgisayarındaki 'uploads' klasörünü konteynere bağla
+                                                              # Map 'uploads' folder on host to container
+                                                                    - ./uploads:/app/uploads

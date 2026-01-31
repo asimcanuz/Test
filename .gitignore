@@ -1,0 +1,11 @@
+target/
+debug/
+release/
+.env
+.DS_Store
+*.swp
+.vscode/
+.idea/
+Upload edilen dosyaları repoya yükleme (Don't upload content files)
+uploads/*
+!uploads/.gitkeep

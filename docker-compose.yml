@@ -2,16 +2,25 @@ version: '3.8'
 
 services:
   cdn-app:
-      build: .
-          container_name: rust_cdn_v1
-              restart: unless-stopped
-                  ports:
-                        - "8080:8080"
-                            environment:
-                                  - JWT_SECRET=bu_cok_gizli_bir_anahtardir_kimseyle_paylasmayin
-                                        - STORAGE_PATH=/app/uploads
-                                              - RUST_LOG=info
-                                                  volumes:
-                                                        # Bilgisayarındaki 'uploads' klasörünü konteynere bağla
-                                                              # Map 'uploads' folder on host to container
-                                                                    - ./uploads:/app/uploads
+    build: .
+    container_name: rust_cdn_v1
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET=bu_cok_gizli_bir_anahtardir_kimseyle_paylasmayin
+      - STORAGE_PATH=/app/uploads
+      - RUST_LOG=info
+    volumes:
+      # Bilgisayarındaki 'uploads' klasörünü konteynere bağla
+      # Map 'uploads' folder on host to container
+      - ./uploads:/app/uploads
+    # Yüksek Trafik için Kaynak Limitleri (Resource Limits for High Traffic)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # Maksimum 2 CPU çekirdeği (Max 2 CPU cores)
+          memory: 1G       # Maksimum 1GB RAM (Max 1GB RAM)
+        reservations:
+          cpus: '0.5'      # Minimum 0.5 CPU çekirdeği (Min 0.5 CPU cores)
+          memory: 256M     # Minimum 256MB RAM (Min 256MB RAM)
